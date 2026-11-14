@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculife | Living Calculus & Rate of Change Simulator</title>
+  <meta name="description" content="Turn everyday rates of change into interactive calculus insights. Model fluid flow in tanks, Newton's law of cooling, and visualize secant-to-tangent convergence with live graphs." />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            calc: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+              950: '#082f49',
+            },
+            fluid: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="if (typeof renderMathInElement !== 'undefined') renderMathInElement(document.body);"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-calc-500 selection:text-white transition-colors duration-300 min-h-screen relative overflow-x-hidden">
+
+  <!-- Ambient Glow Elements -->
+  <div class="ambient-glow-1 top-10 left-1/4 -translate-x-1/2"></div>
+  <div class="ambient-glow-2 top-40 right-10"></div>
+  <div class="ambient-glow-1 bottom-1/4 right-1/3"></div>
+
+  <!-- Sticky Navbar -->
+  <nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="#hero" class="flex items-center gap-3 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-calc-600 via-calc-500 to-indigo-600 flex items-center justify-center text-white font-serif font-bold text-lg shadow-md shadow-calc-500/30 group-hover:scale-105 transition-transform">
+            ∫
+          </div>
+          <div class="flex items-baseline gap-1.5">
+            <span class="font-display font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">Calculife</span>
+            <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-calc-500/10 text-calc-600 dark:text-calc-400 border border-calc-500/20">v2.0</span>
+          </div>
+        </a>
+
+        <!-- Navigation Links -->
+        <div class="hidden md:flex items-center gap-1 font-medium text-sm text-slate-600 dark:text-slate-300">
+          <a href="#hero" class="px-3 py-1.5 rounded-lg hover:text-calc-600 dark:hover:text-calc-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">Home</a>
+          <a href="#simulators" class="px-3 py-1.5 rounded-lg hover:text-calc-600 dark:hover:text-calc-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">Simulators</a>
+          <a href="#about" class="px-3 py-1.5 rounded-lg hover:text-calc-600 dark:hover:text-calc-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">About & Math</a>
+        </div>
+
+        <!-- Right Action Controls -->
+        <div class="flex items-center gap-2.5">
+          <!-- Audio Cue Toggle -->
+          <button id="sound-toggle" class="p-2 rounded-xl text-gray-400 hover:text-calc-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Toggle audio cues" aria-label="Toggle audio effects">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+          </button>
+
+          <!-- Dark Mode Toggle -->
+          <button id="theme-toggle" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Toggle dark mode">
+            <!-- Sun icon for dark mode -->
+            <svg class="theme-sun w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <!-- Moon icon for light mode -->
+            <svg class="theme-moon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+          </button>
+
+          <!-- Launch Button -->
+          <a href="#simulators" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-calc-600 hover:bg-calc-500 shadow-md shadow-calc-600/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
+            <span>Launch Engine</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero" class="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden math-grid">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="grid lg:grid-cols-12 gap-12 items-center">
+        <!-- Hero Text -->
+        <div class="lg:col-span-7 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-calc-200 dark:border-calc-800 text-calc-600 dark:text-calc-400 text-xs font-semibold shadow-sm mb-6 badge-glow">
+            <span class="w-2 h-2 rounded-full bg-calc-500 animate-ping"></span>
+            <span>Real-World Dynamic Rates × Calculus Engine</span>
+          </div>
+
+          <h1 class="font-display text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1] mb-6">
+            Turn everyday rates into
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-calc-500 via-calc-600 to-indigo-500 dark:from-calc-400 dark:via-sky-300 dark:to-indigo-400">
+              living calculus
+            </span>
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            How fast does a tank fill under a dynamic pump? How quickly does hot coffee cool to the perfect sip? 
+            Calculife bridges textbook differential equations with tactile, real-time interactive physics simulations and live charts.
+          </p>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+            <a href="#simulators" class="px-6 py-3.5 rounded-xl font-semibold text-white bg-calc-600 hover:bg-calc-500 shadow-lg shadow-calc-600/30 hover:shadow-calc-600/40 flex items-center gap-2.5 transition-all hover:scale-[1.02]">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+              <span>Explore Simulators</span>
+            </a>
+            <button onclick="document.querySelector('[data-calc-tab=\'tangent\']').click(); document.getElementById('simulators').scrollIntoView({behavior:'smooth'});" class="px-6 py-3.5 rounded-xl font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-calc-500/50 shadow-sm hover:shadow flex items-center gap-2.5 transition-all">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+              <span>Tangent Explorer (dy/dx)</span>
+            </button>
+          </div>
+
+          <!-- Mini Feature Highlights -->
+          <div class="grid grid-cols-3 gap-4 mt-12 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 max-w-lg mx-auto lg:mx-0">
+            <div>
+              <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Derivatives</div>
+              <div class="text-lg font-bold font-mono text-slate-800 dark:text-slate-200">dV/dt = Q</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Instant rates</div>
+            </div>
+            <div>
+              <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Integrals</div>
+              <div class="text-lg font-bold font-mono text-slate-800 dark:text-slate-200">∫ Q dt</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Total volume</div>
+            </div>
+            <div>
+              <div class="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Limits</div>
+              <div class="text-lg font-bold font-mono text-slate-800 dark:text-slate-200">Δx ⟶ 0</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Secant to tangent</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Glassmorphic Interactive Visual Preview -->
+        <div class="lg:col-span-5 relative">
+          <div class="glass-panel-elevated rounded-3xl p-6 sm:p-8 glow-calc relative overflow-hidden">
+            <!-- Header bar of visual -->
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200/80 dark:border-slate-800/80">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-400/80"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-400/80"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-400/80"></span>
+                <span class="text-xs font-mono text-slate-400 ml-2">chamber_dynamics.svg</span>
+              </div>
+              <span id="heroRateBadge" class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-calc-500/10 text-calc-600 dark:text-calc-400 border border-calc-500/20">
+                Q = 35 L/min
+              </span>
+            </div>
+
+            <!-- SVG Tank with Water Physics & Inflow Spout -->
+            <div class="relative h-[280px] sm:h-[320px] flex items-center justify-center">
+              <svg class="w-full h-full max-h-[300px]" viewBox="0 0 200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <!-- Glass body reflection -->
+                  <linearGradient id="glassReflect" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                    <stop offset="15%" stop-color="rgba(255,255,255,0.08)" />
+                    <stop offset="85%" stop-color="rgba(255,255,255,0.04)" />
+                    <stop offset="100%" stop-color="rgba(255,255,255,0.3)" />
+                  </linearGradient>
+
+                  <!-- Water Gradient -->
+                  <linearGradient id="fluidGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="40%" stop-color="#0ea5e9" />
+                    <stop offset="100%" stop-color="#0369a1" />
+                  </linearGradient>
+
+                  <!-- Clip Path for Tank Water Shape -->
+                  <clipPath id="tankBodyClip">
+                    <path d="M22 60 L178 60 L178 220 L22 220 Z" />
+                  </clipPath>
+                </defs>
+
+                <!-- Overhead Inflow Pump & Spout -->
+                <path d="M40 20 L100 20 L100 48" stroke="#64748b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                <rect x="94" y="48" width="12" height="6" rx="2" fill="#94a3b8" />
+                
+                <!-- Water Inflow Stream (visible when pumping) -->
+                <line id="waterStream" x1="100" y1="54" x2="100" y2="140" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" class="water-stream" />
+
+                <!-- Tank Glass Wall Exterior -->
+                <rect x="18" y="58" width="164" height="166" rx="6" stroke="#94a3b8" stroke-width="3" fill="url(#glassReflect)" />
+
+                <!-- Water Fill Geometry (clipped) -->
+                <g clip-path="url(#tankBodyClip)">
+                  <rect id="tankWater" x="20" y="140" width="160" height="80" fill="url(#fluidGradient)" opacity="0.88" />
+                  <!-- Water Surface Sine Ripple -->
+                  <path id="waterSurface" d="M20 140 Q60 137 100 140 T180 140" stroke="#ffffff" stroke-width="2.5" fill="none" opacity="0.9" />
+                </g>
+
+                <!-- Graduation Marks on Left Glass (Measurement Ruler) -->
+                <g stroke="#94a3b8" stroke-width="1.5" opacity="0.6">
+                  <line x1="22" y1="70" x2="32" y2="70" />
+                  <line x1="22" y1="95" x2="28" y2="95" />
+                  <line x1="22" y1="120" x2="32" y2="120" />
+                  <line x1="22" y1="145" x2="28" y2="145" />
+                  <line x1="22" y1="170" x2="32" y2="170" />
+                  <line x1="22" y1="195" x2="28" y2="195" />
+                </g>
+                <text x="36" y="74" font-family="monospace" font-size="8" fill="#94a3b8">100%</text>
+                <text x="36" y="124" font-family="monospace" font-size="8" fill="#94a3b8">50%</text>
+                <text x="36" y="174" font-family="monospace" font-size="8" fill="#94a3b8">25%</text>
+
+                <!-- Tank Base Pedestal -->
+                <rect x="10" y="224" width="180" height="10" rx="3" fill="#475569" />
+              </svg>
+            </div>
+
+            <!-- Glass Chamber Readout Overlay -->
+            <div class="mt-4 pt-4 border-t border-slate-200/80 dark:border-slate-800/80">
+              <div class="flex items-center justify-between mb-2 text-xs">
+                <span class="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-calc-500"></span>
+                  Fill Volume V(t)
+                </span>
+                <span id="tankFillPercent" class="font-mono font-bold text-calc-600 dark:text-calc-400 text-sm">42.0%</span>
+              </div>
+              <div class="w-full bg-slate-200 dark:bg-slate-700/60 rounded-full h-2.5 overflow-hidden">
+                <div id="tankFillBar" class="bg-gradient-to-r from-calc-400 to-calc-600 h-full rounded-full transition-all duration-300" style="width: 42%"></div>
+              </div>
+              <div class="flex items-center justify-between mt-2.5 text-[11px] font-mono text-slate-400">
+                <span id="tankWaterLevelText">420 / 1000 L</span>
+                <span>h = V / (1000·A)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Simulators Master Section -->
+  <section id="simulators" class="py-16 lg:py-24 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header -->
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-calc-500/10 text-calc-600 dark:text-calc-400 border border-calc-500/20 text-xs font-semibold mb-3">
+          Interactive Laboratory
+        </div>
+        <h2 class="font-display text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          Calculus in Daily Life
+        </h2>
+        <p class="text-slate-600 dark:text-slate-300 mt-4 text-base sm:text-lg">
+          Select a simulator below to tweak parameters with live sliders, observe differential rates in real time, and inspect analytical graphs.
+        </p>
+      </div>
+
+      <!-- Modern Interactive Tab Switcher -->
+      <div class="flex items-center justify-center mb-10">
+        <div class="inline-flex p-1.5 rounded-2xl bg-slate-200/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-300/60 dark:border-slate-800 shadow-inner max-w-full overflow-x-auto no-scrollbar gap-1.5">
+          <button data-calc-tab="tank" class="tab-active px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all whitespace-nowrap">
+            <span>💧</span>
+            <span>Tank Fill Engine</span>
+          </button>
+          <button data-calc-tab="cooling" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all whitespace-nowrap">
+            <span>☕</span>
+            <span>Newton's Cooling Lab</span>
+          </button>
+          <button data-calc-tab="tangent" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all whitespace-nowrap">
+            <span>📈</span>
+            <span>Tangent Explorer (dy/dx)</span>
+          </button>
+          <button data-calc-tab="proofs" class="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all whitespace-nowrap">
+            <span>📐</span>
+            <span>Step-by-Step Proofs</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- TAB 1: TANK FILL ENGINE -->
+      <!-- ========================================================= -->
+      <div id="tab-tank" class="space-y-8">
+        <!-- Preset Scenarios Ribbon -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <svg class="w-4 h-4 text-calc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span>Real-World Scenarios:</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button data-tank-preset="domestic" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-calc-50 dark:hover:bg-calc-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🚰 Domestic Water Tank (1000L)
+            </button>
+            <button data-tank-preset="hydrant" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-calc-50 dark:hover:bg-calc-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🚒 Fire Hydrant Deluge (10,000L)
+            </button>
+            <button data-tank-preset="rainbarrel" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-calc-50 dark:hover:bg-calc-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🌧️ Rain Barrel Catchment (250L)
+            </button>
+            <button data-tank-preset="micro" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-calc-50 dark:hover:bg-calc-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🔬 Lab Beaker Drip (10L)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-8 items-start">
+          <!-- Left: Control Cockpit -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="glass-panel-elevated rounded-3xl p-6 sm:p-7 space-y-6">
+              
+              <div class="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-slate-800/80">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-calc-500/10 text-calc-600 dark:text-calc-400 flex items-center justify-center font-bold text-sm">
+                    ⚙️
+                  </div>
+                  <div>
+                    <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Input Parameters</h3>
+                    <p class="text-xs text-slate-500">Dual-bound inputs & live sliders</p>
+                  </div>
+                </div>
+                <div id="tankStatusBadge"></div>
+              </div>
+
+              <!-- Parameter 1: Pump Flow Rate Q -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="pumpRate" class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>Pump Flow Rate</span>
+                    <span class="font-mono text-calc-600 dark:text-calc-400 font-bold">(Q = dV/dt)</span>
+                  </label>
+                  <span class="text-slate-400 font-mono">L/min</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="pumpRateSlider" min="0" max="200" step="1" value="35" class="w-full" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="pumpRate" min="0" max="5000" step="0.5" value="35" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-calc-500" />
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">The rate of fluid accumulation per unit of time.</p>
+              </div>
+
+              <!-- Parameter 2: Tank Capacity -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="tankCapacity" class="text-slate-700 dark:text-slate-300">Tank Capacity Limit</label>
+                  <span class="text-slate-400 font-mono">Liters</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="tankCapacitySlider" min="50" max="5000" step="25" value="1000" class="w-full" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="tankCapacity" min="1" max="50000" step="10" value="1000" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-calc-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Parameter 3: Initial Fill Level V0 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="initialLevel" class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>Starting Fill Level</span>
+                    <span class="font-mono text-calc-600 dark:text-calc-400">(V₀ at t = 0)</span>
+                  </label>
+                  <span class="text-slate-400 font-mono">Liters</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="initialLevelSlider" min="0" max="1000" step="10" value="150" class="w-full" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="initialLevel" min="0" max="50000" step="5" value="150" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-calc-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Parameter 4: Elapsed Time t -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="elapsedTime" class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>Elapsed Time</span>
+                    <span class="font-mono text-calc-600 dark:text-calc-400">(t)</span>
+                  </label>
+                  <span class="text-slate-400 font-mono">minutes</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="elapsedTimeSlider" min="0" max="60" step="0.5" value="12" class="w-full" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="elapsedTime" min="0" max="500" step="0.1" value="12" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-calc-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Parameter 5: Cross-Sectional Area A -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="tankArea" class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>Tank Base Area</span>
+                    <span class="font-mono text-calc-600 dark:text-calc-400">(A)</span>
+                  </label>
+                  <span class="text-slate-400 font-mono">m²</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="tankAreaSlider" min="0.1" max="10" step="0.1" value="1.2" class="w-full" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="tankArea" min="0.01" max="100" step="0.05" value="1.2" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-calc-500" />
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Used for water column height: \( h = V / (1000 \cdot A) \)</p>
+              </div>
+
+              <!-- Live Simulation Control Player -->
+              <div class="pt-4 border-t border-slate-200/80 dark:border-slate-800/80 space-y-3">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                  <span>Simulation Player</span>
+                  <div class="flex items-center gap-1">
+                    <button data-sim-speed="0.5" class="px-2 py-0.5 rounded text-[10px] font-mono hover:bg-slate-200 dark:hover:bg-slate-700">0.5x</button>
+                    <button data-sim-speed="1.0" class="px-2 py-0.5 rounded text-[10px] font-mono bg-calc-600 text-white">1x</button>
+                    <button data-sim-speed="2.0" class="px-2 py-0.5 rounded text-[10px] font-mono hover:bg-slate-200 dark:hover:bg-slate-700">2x</button>
+                    <button data-sim-speed="5.0" class="px-2 py-0.5 rounded text-[10px] font-mono hover:bg-slate-200 dark:hover:bg-slate-700">5x</button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button id="simPlayBtn" class="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-calc-600 hover:bg-calc-500 text-white shadow-md shadow-calc-600/30 flex items-center justify-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+                    <span>Play Simulation</span>
+                  </button>
+                  <button id="simPauseBtn" class="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/30 hidden flex items-center justify-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                    <span>Pause</span>
+                  </button>
+                  <button id="simResetBtn" class="px-4 py-2.5 rounded-xl font-semibold text-sm bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Reset to t=0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Action Bar -->
+              <div class="flex items-center gap-2 pt-2">
+                <button id="copySummaryBtn" class="w-full py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-calc-500 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-2 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                  <span>Copy Calculation Summary</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Right: KPIs, Live Chart & Formulas -->
+          <div class="lg:col-span-7 space-y-6">
+            
+            <!-- 4 Core Metrics Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <!-- Metric 1: Volume -->
+              <div class="glass-panel-elevated rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-1">Total Volume</div>
+                <div class="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white" id="resultVolume">— L</div>
+                <div class="text-[11px] font-mono text-calc-600 dark:text-calc-400 mt-1" id="resultPercent">—%</div>
+              </div>
+
+              <!-- Metric 2: Water Column Height -->
+              <div class="glass-panel-elevated rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-1">Fill Height</div>
+                <div class="text-xl sm:text-2xl font-bold font-mono text-slate-900 dark:text-white" id="resultHeight">— m</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">h = V / (1000·A)</div>
+              </div>
+
+              <!-- Metric 3: Flow Rate dV/dt -->
+              <div class="glass-panel-elevated rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-1">Rate dV/dt</div>
+                <div class="text-xl sm:text-2xl font-bold font-mono text-calc-600 dark:text-calc-400" id="resultRate">— L/min</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">Pump flow</div>
+              </div>
+
+              <!-- Metric 4: Height Rise Rate dh/dt -->
+              <div class="glass-panel-elevated rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-1">Level Speed</div>
+                <div class="text-xl sm:text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="resultDhDt">— cm/min</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">dh/dt</div>
+              </div>
+            </div>
+
+            <!-- Time to Full & Time Remaining -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Time to Full (from V₀)</div>
+                  <div class="text-lg font-bold font-mono text-slate-800 dark:text-slate-200" id="timeToFull">— min</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                  ⏱️
+                </div>
+              </div>
+
+              <div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Time Remaining</div>
+                  <div class="text-lg font-bold font-mono text-slate-800 dark:text-slate-200" id="timeRemaining">— min</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                  ⏳
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Chart Visualization -->
+            <div class="glass-panel-elevated rounded-3xl p-6 relative">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5 text-calc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                  <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Fill Volume Over Time V(t)</h3>
+                </div>
+                <span class="text-xs font-mono text-slate-400">Definite Integral Plot</span>
+              </div>
+              <div class="h-[280px] sm:h-[320px] w-full">
+                <canvas id="tankChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Calculus Under the Hood Explanations -->
+            <div class="glass-panel rounded-2xl p-6 space-y-3">
+              <h4 class="font-display font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="text-calc-500 font-serif font-bold text-base">∫</span>
+                <span>The Exact Calculus Equations</span>
+              </h4>
+              <div class="space-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                <div class="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 font-mono" id="resultVolumeFormula">
+                  \( V(t) = V_0 + Q \cdot t \)
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 font-mono" id="resultHeightFormula">
+                  \( h(t) = V(t) / (1000 \cdot A) \)
+                </div>
+                <div class="p-2.5 rounded-xl bg-white/60 dark:bg-slate-900/60 font-mono" id="resultRateFormula">
+                  \( dV/dt = Q \)
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- TAB 2: NEWTON'S COOLING LAB (THE COFFEE PROBLEM) -->
+      <!-- ========================================================= -->
+      <div id="tab-cooling" class="hidden space-y-8">
+        <!-- Preset Scenarios Ribbon -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span>🔥 Thermal Scenarios:</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button data-cooling-preset="coffee" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              ☕ Ceramic Mug Coffee (92°C)
+            </button>
+            <button data-cooling-preset="thermos" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🧴 Insulated Thermos (95°C)
+            </button>
+            <button data-cooling-preset="icedtea" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🧊 Iced Lemon Tea (4°C)
+            </button>
+            <button data-cooling-preset="soup" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+              🍲 Hot Ramen Broth (98°C)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-8 items-start">
+          <!-- Controls -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="glass-panel-elevated rounded-3xl p-6 sm:p-7 space-y-6 glow-amber">
+              <div class="pb-3 border-b border-slate-200/80 dark:border-slate-800/80">
+                <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Newton's Law of Cooling</h3>
+                <p class="text-xs text-slate-500">\( \frac{dT}{dt} = -k(T - T_{env}) \)</p>
+              </div>
+
+              <!-- Initial Temp T0 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="coolingInitialTemp" class="text-slate-700 dark:text-slate-300">Initial Liquid Temp (T₀)</label>
+                  <span class="text-slate-400 font-mono">°C</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="coolingInitialTempSlider" min="0" max="100" step="1" value="92" class="w-full range-amber" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="coolingInitialTemp" min="-10" max="150" step="1" value="92" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ambient Temp Tenv -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="coolingAmbientTemp" class="text-slate-700 dark:text-slate-300">Ambient Room Temp (T_env)</label>
+                  <span class="text-slate-400 font-mono">°C</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="coolingAmbientTempSlider" min="0" max="45" step="1" value="22" class="w-full range-amber" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="coolingAmbientTemp" min="-20" max="60" step="1" value="22" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cooling Constant k -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="coolingRate" class="text-slate-700 dark:text-slate-300">Cooling Constant (k)</label>
+                  <span class="text-slate-400 font-mono">min⁻¹</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="coolingRateSlider" min="0.005" max="0.15" step="0.005" value="0.045" class="w-full range-amber" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="coolingRate" min="0.001" max="1" step="0.005" value="0.045" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-500">Controls heat transfer rate based on insulation material.</p>
+              </div>
+
+              <!-- Elapsed Time t -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="coolingTime" class="text-slate-700 dark:text-slate-300">Elapsed Cooling Time (t)</label>
+                  <span class="text-slate-400 font-mono">minutes</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="coolingTimeSlider" min="0" max="60" step="1" value="12" class="w-full range-amber" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="coolingTime" min="0" max="240" step="1" value="12" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Coffee Mug Animation Visualizer -->
+              <div class="pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-center gap-6">
+                <div class="relative w-28 h-28 flex items-center justify-center">
+                  <!-- Steam particles -->
+                  <div id="steamContainer" class="absolute -top-6 w-full flex justify-center gap-2 pointer-events-none">
+                    <div class="steam-particle w-3 h-5" style="animation-delay: 0s;"></div>
+                    <div class="steam-particle w-2.5 h-6" style="animation-delay: 0.8s;"></div>
+                    <div class="steam-particle w-3 h-4" style="animation-delay: 1.5s;"></div>
+                  </div>
+                  <!-- Coffee Mug SVG -->
+                  <svg class="w-24 h-24" viewBox="0 0 100 100" fill="none">
+                    <!-- Mug Handle -->
+                    <path d="M68 35 C85 35, 85 65, 68 65" stroke="#94a3b8" stroke-width="7" stroke-linecap="round" fill="none" />
+                    <!-- Mug Body -->
+                    <rect x="22" y="25" width="48" height="50" rx="10" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="3" />
+                    <!-- Coffee Liquid inside -->
+                    <rect id="coffeeLiquid" x="26" y="38" width="40" height="32" rx="6" fill="#ea580c" class="transition-colors duration-500" />
+                    <ellipse cx="46" cy="38" rx="20" ry="4" fill="#ffffff" opacity="0.3" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Drinkability Status</div>
+                  <div id="coolingStatus" class="text-sm font-semibold text-amber-500 mt-1">Perfect Drinking Zone ☕</div>
+                  <div class="text-[11px] text-slate-400 mt-1">Optimal coffee sip is ~58°C</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Cooling Outputs & Chart -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-1">Current Temp</div>
+                <div class="text-2xl font-bold font-mono text-amber-500" id="coolingResultTemp">— °C</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">at time t</div>
+              </div>
+
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-1">Rate of Cooling</div>
+                <div class="text-2xl font-bold font-mono text-slate-800 dark:text-slate-200" id="coolingResultRate">— °C/min</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">dT/dt</div>
+              </div>
+
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-1">Time to 58°C</div>
+                <div class="text-2xl font-bold font-mono text-emerald-500" id="coolingTimeToDrink">— min</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">Ideal Sip Time</div>
+              </div>
+
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-1">Thermal Half-Life</div>
+                <div class="text-2xl font-bold font-mono text-slate-800 dark:text-slate-200" id="coolingHalfLife">— min</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">ln(2)/k</div>
+              </div>
+            </div>
+
+            <!-- Cooling Chart -->
+            <div class="glass-panel-elevated rounded-3xl p-6 relative">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Exponential Temperature Decay Curve</h3>
+                <span class="text-xs font-mono text-slate-400">dT/dt = -k(T - T_env)</span>
+              </div>
+              <div class="h-[280px] sm:h-[320px] w-full">
+                <canvas id="coolingChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Mathematical Proof Box -->
+            <div class="glass-panel rounded-2xl p-6 space-y-3">
+              <h4 class="font-display font-bold text-sm text-slate-900 dark:text-white">Analytic Solution</h4>
+              <div class="p-3 rounded-xl bg-white/60 dark:bg-slate-900/60 font-mono text-xs sm:text-sm" id="coolingFormula">
+                \( T(t) = T_{env} + (T_0 - T_{env}) e^{-k \cdot t} \)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- TAB 3: TANGENT & INSTANTANEOUS RATE EXPLORER -->
+      <!-- ========================================================= -->
+      <div id="tab-tangent" class="hidden space-y-8">
+        <div class="grid lg:grid-cols-12 gap-8 items-start">
+          <!-- Controls -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="glass-panel-elevated rounded-3xl p-6 sm:p-7 space-y-6 glow-violet">
+              <div class="pb-3 border-b border-slate-200/80 dark:border-slate-800/80">
+                <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Secant to Tangent Convergence</h3>
+                <p class="text-xs text-slate-500">Watch the secant line snap to the instantaneous derivative</p>
+              </div>
+
+              <!-- Curve Selector -->
+              <div class="space-y-2">
+                <label for="tangentFnSelect" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Curve Type</label>
+                <select id="tangentFnSelect" class="w-full px-4 py-3 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="polynomial">Parabolic Acceleration: f(x) = x² - 2x + 1</option>
+                  <option value="kinetics">Vehicle Motion: s(t) = 2t² ⟹ v(t) = 4t</option>
+                  <option value="cubic">Cubic Polynomial: f(x) = 0.2x³ - x</option>
+                  <option value="exponential">Biological Growth: f(x) = 2e^(0.4x)</option>
+                </select>
+              </div>
+
+              <!-- Point of Interest x0 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="tangentX0" class="text-slate-700 dark:text-slate-300">Point of Interest (x₀)</label>
+                  <span class="text-slate-400 font-mono">x coordinate</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="tangentX0Slider" min="0" max="5" step="0.1" value="2.0" class="w-full range-violet" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="tangentX0" min="-5" max="10" step="0.1" value="2.0" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step Size Delta X -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <label for="tangentDeltaX" class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>Interval Step</span>
+                    <span class="font-mono text-indigo-500 font-bold">(Δx)</span>
+                  </label>
+                  <span class="text-slate-400 font-mono">Δx</span>
+                </div>
+                <div class="grid grid-cols-12 gap-3 items-center">
+                  <div class="col-span-8">
+                    <input type="range" id="tangentDeltaXSlider" min="0.01" max="3" step="0.01" value="1.5" class="w-full range-violet" />
+                  </div>
+                  <div class="col-span-4">
+                    <input type="number" id="tangentDeltaX" min="0.001" max="10" step="0.05" value="1.5" class="w-full px-3 py-2 rounded-xl text-sm font-mono font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+                <p class="text-[11px] text-slate-500">Drag to observe the secant line slope approach the exact derivative!</p>
+              </div>
+
+              <!-- Quick Squeeze Buttons -->
+              <div class="pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
+                <div class="text-xs font-semibold text-slate-500 mb-2">Squeeze Interval towards Zero:</div>
+                <div class="grid grid-cols-4 gap-2">
+                  <button data-squeeze-dx="2.0" class="px-2 py-1.5 rounded-lg text-xs font-mono bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+                    Δx = 2.0
+                  </button>
+                  <button data-squeeze-dx="0.8" class="px-2 py-1.5 rounded-lg text-xs font-mono bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+                    Δx = 0.8
+                  </button>
+                  <button data-squeeze-dx="0.2" class="px-2 py-1.5 rounded-lg text-xs font-mono bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors">
+                    Δx = 0.2
+                  </button>
+                  <button data-squeeze-dx="0.01" class="px-2 py-1.5 rounded-lg text-xs font-mono bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md shadow-indigo-600/30 transition-all">
+                    Δx ⟶ 0
+                  </button>
+                </div>
+              </div>
+
+              <!-- Formula Box -->
+              <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-xs" id="tangentFnFormula">
+                \( f(x) = x^2 - 2x + 1 \implies f'(x) = 2x - 2 \)
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Tangent Chart & Convergence Metrics -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="grid grid-cols-3 gap-4">
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-purple-500 mb-1">Secant Slope</div>
+                <div class="text-2xl font-bold font-mono text-purple-600 dark:text-purple-400" id="tangentSecantSlope">—</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">Δy / Δx</div>
+              </div>
+
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-emerald-500 mb-1">Exact Tangent</div>
+                <div class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="tangentExactSlope">—</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">f'(x₀) = dy/dx</div>
+              </div>
+
+              <div class="glass-panel-elevated rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-1">Slope Error</div>
+                <div class="text-2xl font-bold font-mono text-slate-800 dark:text-slate-200" id="tangentError">—</div>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">|Secant - Tangent|</div>
+              </div>
+            </div>
+
+            <!-- Dynamic Graph -->
+            <div class="glass-panel-elevated rounded-3xl p-6 relative">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-display font-bold text-slate-900 dark:text-white text-base">Curve, Secant & Tangent Lines</h3>
+                <span class="text-xs font-mono text-slate-400">f'(x) = lim Δx→0 (Δy/Δx)</span>
+              </div>
+              <div class="h-[300px] sm:h-[340px] w-full">
+                <canvas id="tangentChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Real-time Convergence Math Explanation -->
+            <div class="glass-panel rounded-2xl p-6 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Limit Convergence</span>
+                <span class="text-xs font-mono text-indigo-500">Δx = <span id="tangentDeltaXDisp">1.5</span></span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-white/60 dark:bg-slate-900/60 font-mono text-xs sm:text-sm" id="tangentLimitExplanation">
+                <!-- rendered via JS -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- TAB 4: STEP-BY-STEP CALCULUS PROOFS -->
+      <!-- ========================================================= -->
+      <div id="tab-proofs" class="hidden space-y-8">
+        <div class="max-w-4xl mx-auto space-y-6">
+          
+          <div class="glass-panel-elevated rounded-3xl p-8 space-y-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-calc-500/10 text-calc-600 dark:text-calc-400 text-xs font-semibold">
+              Fundamental Theorem of Calculus
+            </div>
+            <h3 class="font-display font-bold text-2xl text-slate-900 dark:text-white">Proof 1: How Fluid Inflow Accumulates (Integration)</h3>
+            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              When water flows into a vessel at rate \( Q(t) \) volume units per unit time, the rate of change of volume \( V(t) \) with respect to time is defined by the first derivative:
+            </p>
+            <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/90 font-mono text-sm">
+              $$ \frac{dV}{dt} = Q(t) $$
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              Separating variables and taking the definite integral from initial time \( t = 0 \) to current time \( t \):
+            </p>
+            <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/90 font-mono text-sm">
+              $$ \int_{V_0}^{V(t)} dV = \int_0^t Q(u) \, du $$
+              $$ V(t) - V_0 = Q \cdot t \quad (\text{for constant } Q) $$
+              $$ V(t) = V_0 + Q \cdot t $$
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              For a cylindrical or prismatic tank with cross-sectional area \( A \), the fluid height is \( h(t) = \frac{V(t)}{1000 \cdot A} \). Differentiating both sides gives the rate of height rise:
+            </p>
+            <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/90 font-mono text-sm">
+              $$ \frac{dh}{dt} = \frac{1}{1000 \cdot A} \cdot \frac{dV}{dt} = \frac{Q}{1000 \cdot A} $$
+            </div>
+          </div>
+
+          <div class="glass-panel-elevated rounded-3xl p-8 space-y-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+              Ordinary Differential Equations (ODEs)
+            </div>
+            <h3 class="font-display font-bold text-2xl text-slate-900 dark:text-white">Proof 2: Newton's Law of Cooling (Separation of Variables)</h3>
+            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              Newton's experimental law states that the rate of temperature loss is proportional to the difference between liquid temperature \( T(t) \) and environmental temperature \( T_{env} \):
+            </p>
+            <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/90 font-mono text-sm">
+              $$ \frac{dT}{dt} = -k (T - T_{env}) $$
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              Separating variables:
+            </p>
+            <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/90 font-mono text-sm">
+              $$ \frac{1}{T - T_{env}} \, dT = -k \, dt $$
+              $$ \int \frac{1}{T - T_{env}} \, dT = \int -k \, dt $$
+              $$ \ln |T - T_{env}| = -kt + C $$
+              $$ T(t) - T_{env} = e^C \cdot e^{-kt} = (T_0 - T_{env}) e^{-kt} $$
+              $$ T(t) = T_{env} + (T_0 - T_{env}) e^{-kt} $$
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- About & Real World Context Section -->
+  <section id="about" class="py-20 bg-slate-100/60 dark:bg-slate-900/60 border-t border-slate-200/80 dark:border-slate-800/80 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          Why Calculus Matters in Daily Life
+        </h2>
+        <p class="text-slate-600 dark:text-slate-300 mt-4 text-base">
+          From civil engineering water distribution to culinary thermodynamics, rates of change govern our physical reality.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Card 1 -->
+        <div class="glass-panel-elevated rounded-3xl p-8 hover:-translate-y-1 transition-all duration-300">
+          <div class="w-12 h-12 rounded-2xl bg-calc-500/10 text-calc-600 dark:text-calc-400 flex items-center justify-center font-bold text-xl mb-6">
+            💧
+          </div>
+          <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white mb-2">Municipal Water & Fluid Dynamics</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+            Reservoir engineers calculate tank fill and drainage rates daily to prevent water hammer, optimize pump electrical schedules, and manage municipal storage towers.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="glass-panel-elevated rounded-3xl p-8 hover:-translate-y-1 transition-all duration-300">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xl mb-6">
+            🌡️
+          </div>
+          <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white mb-2">Thermodynamics & Food Science</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+            Newton's cooling law dictates how HVAC thermostats cycle air conditioning, how baristas estimate milk steaming heat retention, and how medical vaccines are cold-stored.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="glass-panel-elevated rounded-3xl p-8 hover:-translate-y-1 transition-all duration-300">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xl mb-6">
+            🚗
+          </div>
+          <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white mb-2">Kinematics & Autonomous Motion</h3>
+          <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+            Modern vehicle speedometers and ABS anti-lock braking systems sample instantaneous position derivatives (\( v = ds/dt \)) thousands of times per second to ensure safety.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 py-12 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-calc-600 to-indigo-600 flex items-center justify-center text-white font-serif font-bold text-base shadow-sm">
+            ∫
+          </div>
+          <div>
+            <span class="font-display font-bold text-slate-900 dark:text-white text-base">Calculife</span>
+            <p class="text-xs text-slate-400">Calculus in daily life • Clean & Interactive</p>
+          </div>
+        </div>
+
+        <div class="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-right">
+          Built with ❤️, derivatives, and definite integrals.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/calculators.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
